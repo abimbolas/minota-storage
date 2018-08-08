@@ -1,2 +1,1 @@
-# minota-storage
-Storage drivers for Minotá
+# Storage drivers for Minotá
