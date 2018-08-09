@@ -2,11 +2,11 @@
   "name": "minota-storage",
   "version": "1.1.0",
   "description": "Storage drivers for Minotá",
+  "main": "index.js",
   "scripts": {
     "test": "node node_modules/mocha/bin/mocha **/*.test.js --watch",
     "lint": "node node_modules/eslint/bin/eslint ."
   },
-  "main": "index.js",
   "repository": "https://github.com/abimbolas/minota-storage.git",
   "author": "Vitaly Kuleshin <antivitla@gmail.com>",
   "license": "MIT",
