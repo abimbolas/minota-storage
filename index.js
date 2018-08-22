@@ -6,7 +6,7 @@ const StorageTypes = {
 
 const storage = {
   config(config) {
-    return new StorageTypes[config.type](config.file);
+    return new StorageTypes[config.type](config[config.type]);
   },
 };
 
