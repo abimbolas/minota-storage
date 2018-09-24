@@ -11,8 +11,10 @@
   "author": "Vitaly Kuleshin <antivitla@gmail.com>",
   "license": "MIT",
   "dependencies": {
+    "fast-glob": "^2.2.2",
     "fs-extra-promise": "^1.0.1",
     "minota-shared": "*.*",
+    "moment": "^2.22.2",
     "uuid": "^3.3.2"
   },
   "devDependencies": {

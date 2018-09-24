@@ -1,6 +1,7 @@
 const fs = require('fs-extra-promise');
-const uuid = require('uuid/v1');
 const md = require('minota-shared/md');
+const moment = require('moment');
+const uuid = require('uuid/v1');
 
 class FileStorage {
   constructor({ path }) {
@@ -13,13 +14,19 @@ class FileStorage {
 
   get(params) {
     if (params.last === true) {
-      return fs
-        .readFileAsync(`${this.path}/last`, 'utf8')
-        .then(id => fs.readFileAsync(
-          `${this.path}/content/${id}`,
-          'utf8',
-        ))
-        .then(raw => md.parse(raw));
+      return this.getLast();
+    }
+    if (params.last === 'day') {
+      return this.getLastDay();
+    }
+    if (params.notes === 'all') {
+      return this.getAllNotes();
+    }
+    if (params.topics === 'all') {
+      return this.getAllTopics();
+    }
+    if (params.searchBy === 'topic') {
+      return this.searchNotesByTopic(params.topic);
     }
     return Promise.reject(new Error('Storage.get: no params specified'));
   }
@@ -48,6 +55,46 @@ class FileStorage {
     return new Promise((resolve) => {
       resolve(notes);
     });
+  }
+
+  getLast() {
+    return fs.readFileAsync(`${this.path}/last`, 'utf8')
+      .then(id => fs.readFileAsync(`${this.path}/content/${id}`, 'utf8'))
+      .then(raw => md.parse(raw));
+  }
+
+  getLastDay() {
+    return this.getAllNotes().then((notes) => {
+      const lastDay = moment(notes[notes.length - 1].config.date).format('l');
+      return notes.filter(note => moment(note.config.date).format('l') === lastDay);
+    });
+  }
+
+  getAllTopics() {
+    /* eslint array-callback-return: off */
+    return this.getAllNotes().then(notes => notes.reduce((topics, note) => {
+      if (topics.indexOf(note.config.topic) === -1) {
+        topics.push(note.config.topic);
+      }
+      return topics;
+    }, []));
+  }
+
+  getAllNotes() {
+    return fs.readdirAsync(`${this.path}/content/`)
+      .then(filenameList => Promise
+        .all(filenameList.map(filename => fs
+          .readFileAsync(`${this.path}/content/${filename}`, 'utf8')
+          .then(content => md.parse(content)))))
+      .then(nestedList => nestedList.reduce((notes, item) => notes.concat(item), []));
+  }
+
+  searchNotesByTopic(topic) {
+    return this.getAllNotes().then(
+      notes => notes.filter(
+        note => note.config.topic.toLowerCase().match(topic.toLowerCase()),
+      ),
+    );
   }
 }
 
