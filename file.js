@@ -28,6 +28,9 @@ class FileStorage {
     if (params.searchBy === 'topic') {
       return this.searchNotesByTopic(params.topic);
     }
+    if (params.id) {
+      return this.searchNotesById(params.id);
+    }
     return Promise.reject(new Error('Storage.get: no params specified'));
   }
 
@@ -95,6 +98,11 @@ class FileStorage {
         note => note.config.topic.toLowerCase().match(topic.toLowerCase()),
       ),
     );
+  }
+
+  searchNotesById(id) {
+    return fs.readFileAsync(`${this.path}/content/${id}`, 'utf-8')
+      .then(content => md.parse(content));
   }
 }
 
