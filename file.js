@@ -35,9 +35,13 @@ class FileStorage {
   }
 
   post(params) {
+    // Validate
     const notes = params.notes.map((paramNote) => {
       const note = paramNote;
-      note.config.id = note.config.id || uuid();
+      if (!note.config.id || note.config.id === 'new') {
+        note.config.id = uuid()
+      }
+      note.config.date = note.config.date || new Date().toISOString(); // date
       return note;
     });
 
@@ -58,6 +62,21 @@ class FileStorage {
     return new Promise((resolve) => {
       resolve(notes);
     });
+  }
+
+  delete(params) {
+    if (params.id) {
+      return fs.removeAsync(`${this.path}/content/${params.id}`)
+        .then(() => {
+          return `Note ${params.id} deleted`
+        });
+    } else if (params.notes) {
+      return Promise.all(params.notes.map(note => {
+        return fs.removeAsync(`${this.path}/content/${note.config.id}`);
+      })).then(() => {
+        return `Note (s) ${params.notes.map(note => note.config.id).join('; ')} deleted`;
+      });
+    }
   }
 
   getLast() {
