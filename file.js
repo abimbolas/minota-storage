@@ -29,7 +29,7 @@ class FileStorage {
       return this.searchNotesByTopic(params.topic);
     }
     if (params.id) {
-      return this.searchNotesById(params.id);
+      return [this.searchNoteById(params.id)];
     }
     return Promise.reject(new Error('Storage.get: no params specified'));
   }
@@ -39,44 +39,57 @@ class FileStorage {
     const notes = params.notes.map((paramNote) => {
       const note = paramNote;
       if (!note.config.id || note.config.id === 'new') {
-        note.config.id = uuid()
+        note.config.id = uuid();
       }
       note.config.date = note.config.date || new Date().toISOString(); // date
       return note;
     });
 
     // Save notes
-    notes.forEach((note) => {
-      fs.outputFileAsync(
-        `${this.path}/content/${note.config.id}`,
-        md.stringify([note]),
-      );
-    });
-
-    // Save pointer to last note
-    fs.outputFileAsync(
+    return Promise.all(notes.map(note => fs.outputFileAsync(
+      `${this.path}/content/${note.config.id}`,
+      md.stringify([note]),
+    ))).then(() => fs.outputFileAsync(
       `${this.path}/last`,
       `${notes.slice(-1)[0].config.id}`,
-    );
+    )).then(() => Promise.resolve(notes));
+  }
 
-    return new Promise((resolve) => {
-      resolve(notes);
-    });
+  put(params) {
+    const notes = [];
+    return Promise.all(params.notes.map(update => this
+      .searchNoteById(update.config.id)
+      .then((note) => {
+        if (update.content) {
+          /* eslint no-param-reassign: off */
+          note.content = update.content;
+        }
+        // Save note back
+        return fs.outputFileAsync(
+          `${this.path}/content/${note.config.id}`,
+          md.stringify([note]),
+        ).then(() => {
+          notes.push(note);
+        });
+      }))).then(() => notes);
   }
 
   delete(params) {
     if (params.id) {
-      return fs.removeAsync(`${this.path}/content/${params.id}`)
-        .then(() => {
-          return `Note ${params.id} deleted`
-        });
-    } else if (params.notes) {
-      return Promise.all(params.notes.map(note => {
-        return fs.removeAsync(`${this.path}/content/${note.config.id}`);
-      })).then(() => {
-        return `Note (s) ${params.notes.map(note => note.config.id).join('; ')} deleted`;
-      });
+      return fs
+        .removeAsync(`${this.path}/content/${params.id}`)
+        .then(() => `Note ${params.id} deleted`);
     }
+    if (params.notes) {
+      return Promise
+        .all(params.notes.map(note => fs
+          .removeAsync(`${this.path}/content/${note.config.id}`)))
+        .then(() => `Note (s) ${params.notes.map(note => note.config.id).join('; ')} deleted`);
+    }
+    const error = new Error('No id and no notes');
+    error.status = 400;
+    error.statusText = 'Bad Request';
+    return Promise.reject(error);
   }
 
   getLast() {
@@ -119,9 +132,19 @@ class FileStorage {
     );
   }
 
-  searchNotesById(id) {
-    return fs.readFileAsync(`${this.path}/content/${id}`, 'utf-8')
-      .then(content => md.parse(content));
+  searchNoteById(id) {
+    return fs
+      .readFileAsync(`${this.path}/content/${id}`, 'utf-8')
+      .then(content => md.parse(content)[0])
+      .catch((error) => {
+        if (error.code === 'ENOENT') {
+          const e = new Error(`Note with id ${id} not found`);
+          e.status = 404;
+          e.statusText = 'Not Found';
+          return Promise.reject(e);
+        }
+        return JSON.stringify(error.cause);
+      });
   }
 }
 
