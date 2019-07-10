@@ -9,13 +9,10 @@ describe('Storage', () => {
 
   it('should return appropriate storage if specified config', () => {
     const config = {
-      type: 'file',
-      file: {
-        path: 'my-path'
-      }
+      url: 'file://./my-path'
     };
     const customStorage = storage.config(config);
-    assert.equal(customStorage.type, 'file');
+    assert.equal(customStorage.protocol, 'file');
   });
 
   describe('File', () => {
@@ -26,10 +23,7 @@ describe('Storage', () => {
 
     it('should throw error without path', () => {
       const config = {
-        type: 'file',
-        file: {
-          path: ''
-        }
+        url: ''
       };
       try {
         const customStorage = storage.config(config);
@@ -40,10 +34,7 @@ describe('Storage', () => {
 
     it('should show "Not Found" error', (done) => {
       const config = {
-        type: 'file',
-        file: {
-          path: 'test-path'
-        }
+        url: 'file://./test-path'
       };
       fs.removeSync('test-path/content/123')
       storage
@@ -58,10 +49,7 @@ describe('Storage', () => {
 
     it('should put(update) notes', (done) => {
       const config = {
-        type: 'file',
-        file: {
-          path: 'test-path'
-        }
+        url: 'file://./test-path'
       };
       const note = {
         config: {id: '123'},

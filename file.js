@@ -1,15 +1,19 @@
+const path = require('path');
 const fs = require('fs-extra-promise');
 const md = require('minota-shared/md');
 const moment = require('moment');
 const uuid = require('uuid/v1');
 
 class FileStorage {
-  constructor({ path }) {
-    if (!path) {
+  constructor({ url }) {
+    if (!url) {
       throw new Error('FileStorage constructor: should be path to storage');
     }
-    this.type = 'file';
-    this.path = path;
+    if (!url.match(/^file:\/\//)) {
+      throw new Error('FileStorage constructor: not a file url');
+    }
+    this.protocol = url.split('://')[0];
+    this.path = path.resolve(url.replace(':///', '://').split('://')[1]);
   }
 
   get(params) {
@@ -29,7 +33,7 @@ class FileStorage {
       return this.searchNotesByTopic(params.topic);
     }
     if (params.id) {
-      return [this.searchNoteById(params.id)];
+      return this.searchNoteById(params.id);
     }
     return Promise.reject(new Error('Storage.get: no params specified'));
   }
