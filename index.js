@@ -6,7 +6,7 @@ const Storage = {
 
 const storage = {
   config(config) {
-  	const protocol = config.url.split('://')[0];
+    const protocol = config.url.split('://')[0];
     return new Storage[protocol](config);
   },
 };

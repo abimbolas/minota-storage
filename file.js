@@ -4,6 +4,15 @@ const md = require('minota-shared/md');
 const moment = require('moment');
 const uuid = require('uuid/v1');
 
+function getProtocol(url) {
+  return url.split('://')[0];
+}
+
+function getPath(url) {
+  const raw = url.split('://')[1];
+  return raw.match(/^[a-zA-Z]:/) ? raw.slice(1) : raw;
+}
+
 class FileStorage {
   constructor({ url }) {
     if (!url) {
@@ -12,8 +21,8 @@ class FileStorage {
     if (!url.match(/^file:\/\//)) {
       throw new Error('FileStorage constructor: not a file url');
     }
-    this.protocol = url.split('://')[0];
-    this.path = path.resolve(url.replace(':///', '://').split('://')[1]);
+    this.protocol = getProtocol(url);
+    this.path = path.resolve(getPath(url));
   }
 
   get(params) {
