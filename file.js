@@ -10,7 +10,7 @@ function getProtocol(url) {
 
 function getPath(url) {
   const raw = url.split('://')[1];
-  return raw.match(/^[a-zA-Z]:/) ? raw.slice(1) : raw;
+  return raw.match(/^\/[a-zA-Z]:/) ? raw.slice(1) : raw;
 }
 
 class FileStorage {
