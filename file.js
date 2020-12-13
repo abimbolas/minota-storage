@@ -155,6 +155,12 @@ class FileStorage {
     ))).then(() => Promise.resolve(notes));
   }
 
+  deleteNotes(notes) {
+    return Promise.all(
+      notes.map(id => fs.removeAsync(`${this.path}/notes/${id}`))
+    ).then(() => `Notes ${notes.join(', ')} deleted`)
+  }
+
   // getNoteById(id) {
   //   return fs
   //     .readFileAsync(`${this.path}/content/${id}`, 'utf-8')
